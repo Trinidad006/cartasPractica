@@ -22,7 +22,7 @@ class PokemonCardRepositoryImpl implements PokemonCardRepository {
         'orderBy': 'name',
       };
       if (types.isNotEmpty) {
-        queryParameters['q'] = 'types:(${types.join(' OR ')})';
+        queryParameters['q'] = 'types:${types.join(' OR types:')}';
       }
 
       final response = await _dio.get(
@@ -77,7 +77,7 @@ class PokemonCardRepositoryImpl implements PokemonCardRepository {
         'orderBy': 'name',
       };
       if (types.isNotEmpty) {
-        queryParameters['q'] = '${queryParameters['q']} types:(${types.join(' OR ')})';
+        queryParameters['q'] = '${queryParameters['q']} types:${types.join(' OR types:')}';
       }
 
       final response = await _dio.get(

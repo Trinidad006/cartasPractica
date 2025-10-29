@@ -39,10 +39,17 @@ class PokemonCardBloc extends Bloc<PokemonCardEvent, PokemonCardState> {
     emit(state.copyWith(activeFilters: event.newFilters));
     _currentPage = 1;
     try {
-      final cards = await _pokemonCardRepository.getCards(
-        page: _currentPage,
-        types: event.newFilters,
-      );
+      // Si hay una búsqueda activa, mantenerla pero con los nuevos filtros
+      final cards = state.isSearching && state.searchQuery.isNotEmpty
+          ? await _pokemonCardRepository.searchCards(
+              query: state.searchQuery,
+              page: _currentPage,
+              types: event.newFilters,
+            )
+          : await _pokemonCardRepository.getCards(
+              page: _currentPage,
+              types: event.newFilters,
+            );
       _currentPage++;
       emit(state.copyWith(
         status: PokemonCardStatus.success,
@@ -58,8 +65,29 @@ class PokemonCardBloc extends Bloc<PokemonCardEvent, PokemonCardState> {
     CardsSearched event,
     Emitter<PokemonCardState> emit,
   ) async {
-    emit(state.copyWith(isSearching: true, searchQuery: event.query));
     _currentPage = 1;
+    // Si la búsqueda está vacía, volver a cargar todas las cartas
+    if (event.query.isEmpty) {
+      try {
+        final cards = await _pokemonCardRepository.getCards(
+          page: _currentPage,
+          types: state.activeFilters,
+        );
+        _currentPage++;
+        emit(state.copyWith(
+          status: PokemonCardStatus.success,
+          cards: cards,
+          hasReachedMax: false,
+          isSearching: false,
+          searchQuery: '',
+        ));
+      } catch (_) {
+        emit(state.copyWith(status: PokemonCardStatus.failure, isSearching: false, searchQuery: ''));
+      }
+      return;
+    }
+    
+    emit(state.copyWith(isSearching: true, searchQuery: event.query));
     try {
       final cards = await _pokemonCardRepository.searchCards(
         query: event.query,

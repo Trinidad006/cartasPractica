@@ -82,12 +82,21 @@ class _CardsViewState extends State<CardsView> {
             context.read<PokemonCardBloc>().add(CardsRefreshed()),
         child: BlocBuilder<PokemonCardBloc, PokemonCardState>(
           builder: (context, state) {
+            if (state.isSearching && state.status == PokemonCardStatus.initial) {
+              return const Center(child: CircularProgressIndicator());
+            }
             switch (state.status) {
               case PokemonCardStatus.failure:
                 return const Center(child: Text('Fallo al obtener las cartas'));
               case PokemonCardStatus.success:
                 if (state.cards.isEmpty) {
-                  return const Center(child: Text('No se encontraron cartas'));
+                  return Center(
+                    child: Text(
+                      state.isSearching || state.searchQuery.isNotEmpty
+                          ? 'No se encontraron cartas para "${state.searchQuery}"'
+                          : 'No se encontraron cartas',
+                    ),
+                  );
                 }
                 return ListView.builder(
                   controller: _scrollController,

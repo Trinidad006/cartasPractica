@@ -17,11 +17,14 @@ class CardDetailCubit extends Cubit<CardDetailState> {
   final String cardId;
 
   Future<void> fetchCard() async {
+    if (isClosed) return;
     emit(state.copyWith(status: CardDetailStatus.loading));
     try {
       final card = await pokemonCardRepository.getCard(id: cardId);
+      if (isClosed) return;
       emit(state.copyWith(status: CardDetailStatus.success, card: card));
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(status: CardDetailStatus.failure));
     }
   }
